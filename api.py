@@ -33,16 +33,36 @@ class EnergiFyn:
         }
         try:
             response = self._getJsonResult('/mobileLogin', data)
-            print(response['result']['sessionId'])
             self._sessionId = response['result']['sessionId']
         except HTTPError as e:
             response = json.loads(e.read().decode())
             # TODO Check if there in fact is JSON to parse
             raise LoginError(response['errorMsg'])
         
-    def getOptions(self):
+    def getSeries(self):
         try:
-            response = self._getJsonResult('/mobileItemGroups')
-            print(response)
+            return self._getJsonResult('/mobileItemGroups')
+        except HTTPError as e:
+            print(e.read())
+
+    def getActiveItems(self):
+        items = self.getSeries()
+        active_items = []
+        for item in items[0]["items"]:
+            if(item["active"]):
+                active_items.append(item)
+        return active_items
+
+    def getSeriesData(self, start, end, id, series):
+        data = {
+            "start": int(start.timestamp())*1000,
+            "end": int(end.timestamp())*1000,
+            "itemCategory": "SonWinMeter",
+            "itemId": id,
+            "series": series
+        }
+        try:
+            response = self._getJsonResult('/seriesData', data)
+            return response
         except HTTPError as e:
             print(e.read())
